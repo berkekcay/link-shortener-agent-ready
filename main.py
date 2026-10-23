@@ -9,6 +9,7 @@ Run:
 Test:
     pytest
 """
+import re
 import sqlite3
 import string
 from contextlib import closing
@@ -20,6 +21,10 @@ from pydantic import BaseModel
 
 DB_PATH = Path(__file__).parent / "links.db"
 ALPHABET = string.ascii_letters + string.digits
+# Only URL-safe characters, so every alias is reachable as a single path segment.
+ALIAS_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,32}")
+# Paths FastAPI matches before /{code}; an alias with these names could never redirect.
+RESERVED_ALIASES = {"docs", "redoc", "shorten"}
 
 app = FastAPI(title="Link Shortener")
 
@@ -59,17 +64,40 @@ def encode(n: int) -> str:
 
 class ShortenRequest(BaseModel):
     url: str
+    alias: str | None = None
 
 
 @app.post("/shorten")
 def shorten(req: ShortenRequest):
     if not req.url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="url must start with http:// or https://")
+    if req.alias is not None:
+        if not ALIAS_PATTERN.fullmatch(req.alias):
+            raise HTTPException(
+                status_code=400,
+                detail="alias must be 1-32 characters: letters, digits, '-' or '_'",
+            )
+        if req.alias in RESERVED_ALIASES:
+            raise HTTPException(status_code=400, detail="alias is reserved")
     with closing(get_db()) as conn:
-        cur = conn.execute("INSERT INTO links (url) VALUES (?)", (req.url,))
-        row_id = cur.lastrowid
-        code = encode(row_id)
-        conn.execute("UPDATE links SET code = ? WHERE id = ?", (code, row_id))
+        if req.alias is not None:
+            code = req.alias
+            try:
+                # The UNIQUE constraint detects conflicts, so there is no check-then-insert race.
+                conn.execute("INSERT INTO links (code, url) VALUES (?, ?)", (code, req.url))
+            except sqlite3.IntegrityError:
+                raise HTTPException(status_code=409, detail="alias already taken")
+        else:
+            while True:
+                cur = conn.execute("INSERT INTO links (url) VALUES (?)", (req.url,))
+                row_id = cur.lastrowid
+                code = encode(row_id)
+                try:
+                    conn.execute("UPDATE links SET code = ? WHERE id = ?", (code, row_id))
+                    break
+                except sqlite3.IntegrityError:
+                    # An alias already holds this code; drop the row and try the next id.
+                    conn.execute("DELETE FROM links WHERE id = ?", (row_id,))
         conn.commit()
     return {"code": code, "short_url": f"/{code}"}
 
