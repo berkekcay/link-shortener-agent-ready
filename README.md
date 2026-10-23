@@ -25,4 +25,4 @@ curl -X POST localhost:8000/shorten -H 'Content-Type: application/json' \
 - `docs/TASKS.md`: the feature tasks
 - `AGENTS.md`, `CLAUDE.md`, `.claude/skills/`: guidance for coding agents
 
-Start by running the existing tests, then read all three files before adding agent guidance.
+See `writeup.md` for how the guidance was used to add custom aliases (task 1).

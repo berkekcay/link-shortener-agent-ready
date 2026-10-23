@@ -38,6 +38,8 @@ click count, a different database or an ORM, background jobs, rate limiting, spl
 
 - Only `http://` and `https://` URLs are accepted; anything else is HTTP 400.
 - An unknown code is HTTP 404 with `{"detail": "unknown code"}`.
+- Custom aliases match `[A-Za-z0-9_-]{1,32}`; `docs`, `redoc`, `shorten` are reserved (400);
+  a taken alias or code is 409. Add new top-level routes to `RESERVED_ALIASES`.
 - Errors use `HTTPException`, so bodies are `{"detail": "..."}`; no tracebacks.
 - Every new behavior gets a success test and at least one failure test.
 
