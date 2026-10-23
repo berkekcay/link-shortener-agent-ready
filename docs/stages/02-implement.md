@@ -43,7 +43,7 @@ The same result on a second run against the saved `links.db`, and with `links.db
 ```text
 Task: 1. Custom alias
 Files changed: main.py, tests/test_main.py
-Tests added: 10 test functions, 16 cases (the 3 original tests are unchanged)
+Tests added: 9 test functions, 19 cases (the 3 original tests are unchanged)
 pytest result: 22 passed
 Remaining risks:
   - "stats" is not reserved; add it if task 2 adds GET /stats/{code}.
