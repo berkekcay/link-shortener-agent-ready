@@ -20,8 +20,9 @@ curl -X POST localhost:8000/shorten -H 'Content-Type: application/json' \
 
 ## Files
 
-- `main.py` — the app (`POST /shorten`, `GET /{code}`)
-- `test_main.py` — the existing pytest suite
-- `docs/TASKS.md` — choose one feature to implement
+- `main.py`: the app (`POST /shorten`, `GET /{code}`)
+- `tests/test_main.py`: the pytest suite (rules for it in `tests/AGENTS.md`)
+- `docs/TASKS.md`: the feature tasks
+- `AGENTS.md`, `CLAUDE.md`, `.claude/skills/`: guidance for coding agents
 
 Start by running the existing tests, then read all three files before adding agent guidance.
